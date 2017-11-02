@@ -12,18 +12,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <string.h>
 
-int main(){
-  DIR * d = opendir("..");
-
+int printd(char * name){
+  DIR * d = opendir(name);
   struct dirent * thing = readdir(d);
+  struct stat sb;
+  
+  int tsize = 0;
+
   while(thing){
+    stat(thing->d_name, &sb);
+    int size = sb.st_size;
+    tsize += size;
+
     printf("file name: %s\n", thing->d_name);
     printf("file type: %d\n\n", thing->d_type);
-    
-    thing = readdir(d);
+
+    if(size == 4096){
+      char s[256];
+      strcpy(s, name);
+      strcat(s, strcat("/", thing->d_name));
+      return(tsize + printd(name));
+    }
   }
-  closedir(d);
+
+  return tsize;
+}
+
+int main(){
+  int size = printd("..");
+  printf("total size of stuff: %d\n", size);
 }
