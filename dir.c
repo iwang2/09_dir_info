@@ -24,26 +24,45 @@ int printd(char * name){
   
   int tsize = 0;
 
-  while(thing){
-    stat(thing->d_name, &sb);
-    int size = sb.st_size;
-    tsize += size;
-
-    printf("file name: %s\n", thing->d_name);
-    printf("file type: %d\n\n", thing->d_type);
-
-    if(size == 4096){
-      char s[256];
-      strcpy(s, name);
-      strcat(s, strcat("/", thing->d_name));
-      return(tsize + printd(name));
+  while(thing){    
+    if(thing->d_type == DT_DIR){
+      stat(thing->d_name, &sb);
+      tsize += sb.st_size;
+      printf("name: %s\n", thing->d_name);
+      printf("size: %d\n\n", (int)sb.st_size);
     }
+    
+    thing = readdir(d);
   }
+  closedir(d);
+  return tsize;
+}
 
+int printfile(char * name){
+  DIR * d = opendir(name);
+  struct dirent * thing = readdir(d);
+  struct stat sb;
+  int tsize = 0;
+
+  while(thing){
+    if(thing->d_type != DT_DIR){
+      stat(thing->d_name, &sb);
+      tsize = sb.st_size;
+      printf("name: %s\n", thing->d_name);
+      printf("size: %d\n\n", (int)sb.st_size);
+    }
+    thing = readdir(d);
+  }
+  closedir(d);
   return tsize;
 }
 
 int main(){
-  int size = printd("..");
-  printf("total size of stuff: %d\n", size);
+  printf("\nDIRECTORIES:\n");
+  int dsize = printd(".");
+  printf("total size of directories (but not the stuff in them): %d\n\n", dsize);
+  
+  printf("\nFILES:\n");
+  int fsize = printfile(".");
+  printf("total size of files: %d\n\n", fsize);
 }
